@@ -1,28 +1,74 @@
 # Resourcefully
-Short description and motivation.
+
+Quick way to build out HTTP controllers that stay as close to HTTP as possible. Keeps models and controllers slim and puts business logic into Resources.
 
 ## Usage
 How to use my plugin.
 
 ## Installation
-Add this line to your application's Gemfile:
 
-```ruby
-gem "resourcefully"
-```
+Add to your Rails application Gemfile by executing:
 
-And then execute:
 ```bash
-$ bundle
+bundle add "resourcefully"
 ```
 
-Or install it yourself as:
+Then run:
+
 ```bash
-$ gem install resourcefully
+# TODO: Not implemented yet
+rails generate resourcefully:install
 ```
+
+This will create the folders and files needed to get going with Resourcefully.
+
+```txt
+# TODO: Not implemented yet
+app/controllers/application_resources_controller.rb
+```
+
+## Concepts
+
+Resourcefully makes it easy to build RESTful Rails applications that follow the CRUD controller pattern and shallow routes.
+
+## Controller types
+
+There's a few types of controllers you'll want to use:
+
+### ResourcesController
+
+The most common type of controller is a resources controller. Its very much like a vanilla RESTful Rails controller where `index` is the collection of resources and `new`, `create`, `show`, `edit`, `update`, and `destroy` operate on the singular resource.
+
+For example, a blog web application might have a `Posts` Resources controller.
+
+### ResourceController
+
+Similar to above, but does not have an `index` action. Singular resources are commonly used in web applications for managing the current users profile and associated resources.
+
+For example, a blog web application might have a `Session` Resource controller that the user can create when they login and destroy when they log out.
+
+### NestedResources
+
+Nested resources are designed to be scoped within a `Resources`. They have `new`, `create`, and `index` actions, but do not have the remaining actions. The remaining CRUD actions for a nested resource should be `Resources` controller.
+
+For example, a blog's `Post` resources might have many `Comment` resources per post. The creation of the comment is within the context of the `Post` resource. After the `Comment` resource is created, the `Post` should be persisted in the `Comment` (probably as `comments.post_id`) if it needs to be accessible after its persisted.
+
+It's possible to have the other CRUD actions in a nested resource, but its discourage since nesting controller scopes can be difficult to maintain as dependencies and business logic change. Best to keep themn flat.
+
+### NestedResource
+
+A nested resources is similar to the nested resources, but is singular. For example, a `Post` may have an `Author` resource at `posts/:id/author`. The singular nested resource supports the full range of CRUD actions, but does not have `index`.
+
+### NestedWeakResource
+
+A nested weak resource is on where the underlying resource is the same as the parent resource.
+
+For example, a `Post` may require a confirmation screen before its deleted available at `posts/:id/delete_confirmation/new`. The user would press the `Confirm deletion` button on that screen which would `POST` to `/posts/:id/delete_confirmation` and destroy the object.
 
 ## Contributing
-Contribution directions go here.
+
+Open issues with reproducable steps.
 
 ## License
+
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
