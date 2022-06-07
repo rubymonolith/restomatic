@@ -1,10 +1,10 @@
 # Oxidizer
 
-Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer resources a lot of the boilerplate and spaghetti code typically seen in Rails controllers by:
+Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer reduces a lot of the boilerplate and spaghetti code typically seen in Rails controllers by:
 
-1. Moves authorization out of controller methods and callbacks and into policy objects via Pundit.
+1. Moving authorization out of controller methods and callbacks and into policy objects via Pundit.
 2. Encourage the use of more, but smaller, controllers to handle various interactions with ActiveRecord objects and other Resources.
-3. Utiliziers PORO and inheritance for making controller code less verbose, as opposed to a DSL approach, which can be difficult to extend and obscufates how Rails controllers work.
+3. Utilizes PORO and inheritance for making controller code less verbose, as opposed to a DSL approach, which can be difficult to extend and obfuscates how Rails controllers work.
 4. Encourages keeping business logic out of ActiveRecord objects **and** controllers by utilizing Resource objects.
 
 Putting that all together, a typical Oxidizer controller that handles CRUD actions for a blog comment feature would look like this:
@@ -96,7 +96,7 @@ For example, a `Post` may require a confirmation screen before its deleted avail
 
 ## Contributing
 
-Open issues with reproducable steps.
+Open issues with reproducible steps.
 
 ## License
 
