@@ -1,6 +1,38 @@
 # Oxidizer
 
-Quick way to build out HTTP controllers that stay as close to HTTP as possible. Keeps models and controllers slim and puts business logic into Resources.
+Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer resources a lot of the boilerplate and spaghetti code typically seen in Rails controllers by:
+
+1. Moves authorization out of controller methods and callbacks and into policy objects via Pundit.
+2. Encourage the use of more, but smaller, controllers to handle various interactions with ActiveRecord objects and other Resources.
+3. Utiliziers PORO and inheritance for making controller code less verbose, as opposed to a DSL approach, which can be difficult to extend and obscufates how Rails controllers work.
+4. Encourages keeping business logic out of ActiveRecord objects **and** controllers by utilizing Resource objects.
+
+Putting that all together, a typical Oxidizer controller that handles CRUD actions for a blog comment feature would look like this:
+
+```ruby
+# Example Oxidizer controller for comments in a blog post.
+class CommentsController < Oxidizer::NestedResourcesController
+  protected
+    def self.resource
+      Comment
+    end
+
+    def self.parent_resource
+      Post
+    end
+
+    def assign_attributes
+      @comment.user = current_user
+      @comment.blog = @post
+    end
+
+    def permitted_params
+      [:post_id, :body]
+    end
+end
+```
+
+Since there's no DSLs, its easy to extend Oxidizer controllers to implement any type of behavior you need.
 
 ## Installation
 
