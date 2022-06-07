@@ -1,4 +1,4 @@
-module Resourcefully
+module Oxidizer
   class ResourcesController < ApplicationController
     before_action :authenticate_user
     before_action :assign_resource_instance_variable, if: :member_request?
@@ -10,7 +10,6 @@ module Resourcefully
       :resource_class,
       :resource,
       :resources,
-      :navigation_key,
       :created_resource,
       :updated_resource
 

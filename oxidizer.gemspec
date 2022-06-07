@@ -1,11 +1,11 @@
-require_relative "lib/resourcefully/version"
+require_relative "lib/oxidizer/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "resourcefully"
-  spec.version     = Resourcefully::VERSION
+  spec.name        = "oxidizer"
+  spec.version     = Oxidizer::VERSION
   spec.authors     = ["Brad Gessler"]
   spec.email       = ["bradgessler@gmail.com"]
-  spec.homepage    = "https://github.com/rocketshipio/resourcefully"
+  spec.homepage    = "https://github.com/rocketshipio/oxidizer"
   spec.summary     = "Rapidly build Rails controllers."
   spec.description = spec.summary
   spec.license     = "MIT"

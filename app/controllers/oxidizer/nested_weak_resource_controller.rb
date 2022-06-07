@@ -1,4 +1,4 @@
-module Resourcefully
+module Oxidizer
   # This controller is designed for a "Weak" resource entity, or the `parent_resource`
   # is the same as the `resource`. This is useful if you want to have complex view logic
   # in place to change a few parameters on a model.
@@ -25,7 +25,7 @@ module Resourcefully
         parent_resource.account
       end
 
-      def set_new_resource
+      def assign_new_resource
         # Do nothing; resource is already created, you're
         # just doing something to it.
       end

@@ -1,4 +1,4 @@
-module Resourcefully
+module Oxidizer
   class NestedResourcesController < ResourcesController
     before_action :assign_parent_resource_instance_variable
     before_action :assign_resources_instance_variable, only: :index

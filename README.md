@@ -1,26 +1,23 @@
-# Resourcefully
+# Oxidizer
 
 Quick way to build out HTTP controllers that stay as close to HTTP as possible. Keeps models and controllers slim and puts business logic into Resources.
-
-## Usage
-How to use my plugin.
 
 ## Installation
 
 Add to your Rails application Gemfile by executing:
 
 ```bash
-bundle add "resourcefully"
+bundle add "oxidizer"
 ```
 
 Then run:
 
 ```bash
 # TODO: Not implemented yet
-rails generate resourcefully:install
+rails generate oxidizer:install
 ```
 
-This will create the folders and files needed to get going with Resourcefully.
+This will create the folders and files needed to get going with Oxidizer.
 
 ```txt
 # TODO: Not implemented yet
@@ -29,7 +26,7 @@ app/controllers/application_resources_controller.rb
 
 ## Concepts
 
-Resourcefully makes it easy to build RESTful Rails applications that follow the CRUD controller pattern and shallow routes.
+Oxidizer makes it easy to build RESTful Rails applications that follow the CRUD controller pattern and shallow routes.
 
 ## Controller types
 

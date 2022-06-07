@@ -1,4 +1,4 @@
 # desc "Explaining what the task does"
-# task :resourcefully do
+# task :oxidizer do
 #   # Task goes here
 # end

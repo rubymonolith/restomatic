@@ -1,4 +1,4 @@
-module Resourcefully
+module Oxidizer
   # Controller for nesting a singular resource within a parent resource. This
   # should only be used for creating a new resource within the scope of the parent
   # resource, or to redirect to the un-nested resource location if it exists.

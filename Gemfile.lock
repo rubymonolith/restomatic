@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    resourcefully (0.1.0)
+    oxidizer (0.1.0)
       rails (>= 7.0.3)
 
 GEM
@@ -178,7 +178,7 @@ PLATFORMS
   x86_64-darwin-20
 
 DEPENDENCIES
-  resourcefully!
+  oxidizer!
   rspec-rails (~> 5.1)
   sprockets-rails
   sqlite3
