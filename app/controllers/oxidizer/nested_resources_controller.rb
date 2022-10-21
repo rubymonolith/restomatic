@@ -12,7 +12,7 @@ module Oxidizer
       end
 
       def resources
-        @_resources ||= nested_resource_scope
+        @_resources ||= order_resource_scope nested_resource_scope
       end
 
       # Use callbacks to share common setup or constraints between actions.

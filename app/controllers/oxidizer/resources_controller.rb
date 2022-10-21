@@ -11,7 +11,8 @@ module Oxidizer
       :resource,
       :resources,
       :created_resource,
-      :updated_resource
+      :updated_resource,
+      :permitted_order_params
 
     # These are used to contain the serialized IDs for resources so they can
     # be accessed from views on the other side of the action that's performed.
@@ -177,7 +178,7 @@ module Oxidizer
       end
 
       def resources
-        @_resources ||= resource_scope
+        @_resources ||= order_resource_scope resource_scope
       end
 
       # Additional formats can be specified for successful response creations
@@ -214,10 +215,28 @@ module Oxidizer
         resource.account if member_request?
       end
 
+      # Adds a SQL `order` clause for the attributes enabled via the
+      # `permitted_order_params` method.
+      def order_resource_scope(scope)
+        return scope if order_params.empty?
+        scope.order **order_params
+      end
+
+      # Permitted attributes that can be used to order a scope.
+      def permitted_order_params
+        []
+      end
+
     private
       # Never trust parameters from the scary internet, only allow the white list through.
       def resource_params
         params.require(resource_name).permit(permitted_params)
+      end
+
+      # Params needed to order a resource scope. For example, if you'd like to sort a scope
+      # by created at, this would be queried via `?order[created_at]=asc`
+      def order_params
+        params.fetch(:order, {}).permit *permitted_order_params
       end
 
       # Assign global_id to resource that was just created. This is used in subsequent
