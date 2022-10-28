@@ -56,6 +56,52 @@ This will create the folders and files needed to get going with Oxidizer.
 app/controllers/application_resources_controller.rb
 ```
 
+The application resources controller is actually a few controllers. You can split them out, but to start its easiest to keep them in one file.
+
+```ruby
+class Resources < ApplicationController
+  include Oxidizer::ResourceCollection
+
+  class Resource < Resources
+    include Oxidizer::SingularResource
+  end
+
+  class NestedResource < Resource
+    include Oxidizer::NestedResource
+  end
+
+  class NestedWeakResource < Resource
+    include Oxidizer::NestedWeakResource
+  end
+end
+```
+
+Then from your application, you can generate resources as follows:
+
+```sh
+./bin/rails g oxidizer:resources
+```
+
+## Routing
+
+Oxidizer can automatically mount your resource tree so you don't have to maintain redudant route files. Here's how that looks:
+
+```ruby
+oxidizer.resource :accounts
+```
+
+If the structure of accounts is:
+
+```
+accounts
+  |- items_controller.rb
+  |- labels_controller.rb
+accounts_controller.rb
+items_controller.rb
+```
+
+All routes will get automatically generatated. There's no need to maintain a Routes file that mimics the structure of your controllers.
+
 ## Concepts
 
 Oxidizer makes it easy to build RESTful Rails applications that follow the CRUD controller pattern and shallow routes.
