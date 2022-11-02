@@ -20,6 +20,7 @@ A great Rails developer is always wary of taking on new abstractions, particular
 
 Here's what a typical oxidizer resources controller looks like:
 
+#### 🚀 Controllers with Oxidizer
 ```ruby
 # Example Oxidizer controller for comments in a blog post.
 module Posts
@@ -38,6 +39,8 @@ end
 ```
 
 It looks like there's a lot of magic going on, but there's not. It's all accomplished via inheritance. Here's what the controller above looks like when its expanded out.
+
+#### 🐌 Controllers without Oxidizer
 
 ```ruby
 # Here's what it would look like if you implemented most of the boiler plate above in a controller without using Oxidizer.
@@ -109,11 +112,12 @@ Since there's no DSLs, its easy to extend Oxidizer controllers to implement any 
 
 Similar to Oxidizer controllers, Oxidizer route helpers make it a little easier to mount your RESTful controllers into your application without much additional magic beyond Rails routing.
 
+#### 🚀 Routes with Oxidizer
 ```ruby
 resources :items do
   get :search, to: "items/searches#index"
-  nest :items do
-    resources :children, only: %i[index new create] do
+  nest do
+    create :children do
       collection do
         get :templates
       end
@@ -130,6 +134,8 @@ end
 ```
 
 Here's what the fully expanded routes would look like if you did them all manually by yourself.
+
+#### 🐌 Controllers without Oxidizer
 
 ```ruby
 resources :items do
