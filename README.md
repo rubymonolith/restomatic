@@ -144,6 +144,49 @@ For example, a `Post` may require a confirmation screen before its deleted avail
 
 Open issues with reproducible steps.
 
+## Compared to other gems
+
+During the development of this gem, some of these other libraries were mentioned as "similar gems", so I evaluate each one to make sure I'm not implementing the same thing or communicate "how its different this time".
+
+### [Inherited Resources](https://github.com/activeadmin/inherited_resources)
+
+> Sounds a bit like inherited_resources tbh?
+>
+> I get the feeling I’ve already been there and didn’t like it in the end.
+
+[@julian_rubisch](https://twitter.com/julian_rubisch/status/1587186996879007747?s=61&t=gOFfW6GtJqGs5ETPy_nsog)
+
+Yeah, I've been there too! I used the Inherited Resources gem once for an admin panel and found it difficult to do things when I inherited.
+
+Take for example this:
+
+```ruby
+# Code from InheritedResources
+class AccountsController < InheritedResources::Base
+  defaults :resource_class => User, :collection_name => 'users', :instance_name => 'user'
+end
+```
+
+That's not really inheritence; rather, it's a class method DSL that configures instances methods. Why not just modify the instance methods themselves?
+
+That's how Oxidizer does it:
+
+```ruby
+class AccountsController < ApplicationResourcesController
+  def self.resource
+    User
+  end
+
+  def resource_name
+    "user"
+  end
+
+  def resources_name
+    "users"
+  end
+end
+```
+
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
