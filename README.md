@@ -1,24 +1,17 @@
 # Oxidizer
 
-Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer reduces a lot of the boilerplate code typically seen in Rails controllers by:
+There's a lot of [great content](http://weblog.jamisbuck.org/2007/2/5/nesting-resources) written about the importance of [shallow routes](https://guides.rubyonrails.org/routing.html#limits-to-nesting) for building RESTful Rails applications, but the tools Rails gives us out of the box [leaves a lot to be desired](#the-problem-with-rails-shallow-resources).
 
-1. Making common controller concerns, like authorization, batch selection, searching, sorting, pagination, creating X copies on creation, etc. into classes that can be composed back into the controller.
+## How Oxidizer overcomes the shortcomings of Rails shallow routes
 
-2. Encourage the use of more, but smaller, controllers to handle various interactions with ActiveRecord objects and other Resources.
+Oxidizer delivers on the original promise of Rails: convention over configuration. Here's how it delivers on that.
 
-3. Utilizes PORO and inheritance for making controller code less verbose, as opposed to a DSL approach, which can be difficult to extend and obfuscates how Rails controllers work.
-
-4. Encourages keeping business logic out of ActiveRecord objects **and** controllers by utilizing Resource objects.
-
-Putting that all together, a typical Oxidizer controller that handles CRUD actions for a blog comment feature would look like this:
-
-## Putting it all together
-
-A great Rails developer is always wary of taking on new abstractions, particularly when they're DSLs. One of the most important thing when evaluating more powerful abstractions is the ability to "eject" from them back into plain 'ol Rails if the abstraction stops working. That's exactly what Oxidizer does. Let's have a closer look.
+1. Infer model scopes from controller names and scopes.
+2. More intuitive route helpers that better describe the relationship of a sub-resource to its parent resource.
 
 ### Controllers
 
-Here's what a typical oxidizer resources controller looks like:
+Here's what a typical oxidizer resource controller looks like:
 
 #### 🚀 Controllers with Oxidizer
 ```ruby
@@ -40,7 +33,12 @@ end
 
 It looks like there's a lot of magic going on, but there's not. It's all accomplished via inheritance. Here's what the controller above looks like when its expanded out.
 
-#### 🐌 Controllers without Oxidizer
+| :fire: Did you get burned by Inherited Resources? |
+|:--------------------------------------------------|
+| Me too! [Read about how Inherited Resources is different](#inherited-resources) and not really based on inheritance. |
+
+
+#### 🐌 Manually implementing the methods that Oxidizer provides
 
 ```ruby
 # Here's what it would look like if you implemented most of the boiler plate above in a controller without using Oxidizer.
@@ -135,7 +133,7 @@ end
 
 Here's what the fully expanded routes would look like if you did them all manually by yourself.
 
-#### 🐌 Controllers without Oxidizer
+#### 🐌 Routes before Oxidizer existed
 
 ```ruby
 resources :items do
@@ -160,7 +158,115 @@ end
 
 Again, Oxidizer makes it easy to eject from its abstractions into vanilla Rails if you need to change a few things within your application.
 
-## Installation
+## The problem with Rails shallow resources
+
+Rails does a good job warning us about the perils of shallow routes and even gets us started with the `resources :comments, shallow: true` helper, but as your application grows, it doesn't provide much in the way of code organization and reducing the amount of boiler plate code needed to make this work.
+
+Let's start by looking a typical Rails routes file.
+
+```ruby
+resources :posts
+  # Creates a comment on `Post.find(params[:post_id]).comments.create`
+  resources :comments, shallow: true
+end
+
+resources :users do
+  # We want to display comments for each user via `User.find(params[:user_id]).comments`
+  resources :comments, only: :index
+end
+```
+
+If you use shallow routes, both `resources :comments` entries point to the `CommentsController`. This is where things start getting crazy—what if you want to display different views for each scope but it's pointing to the same controller?
+
+You could implement a conditional within the `CommentsController` that checks for the presence of different ids.
+
+```ruby
+# Don't do this!
+def show
+  if params.key? :post_id
+    render "comment_post"
+  elsif params.key? :user_id
+    render "user_post"
+  else
+    render "show"
+  end
+end
+```
+
+Don't do that! Having conditions like this is code smell that each scope needs its own controller, which means we break apart `CommentsController` into `Posts::CommentsController` in `./app/controllers/posts/comments_controller.rb` and `Users::CommentsControllers` in `./app/controllers/users/comments_controller.rb`. It eliminates the crazy conditional above, but then it forces us to generate lots of resource controllers with routing entries that don't make a ton of sense.
+
+```ruby
+resources :posts
+  scope module: :posts do
+    # Creates a comment on `Post.find(params[:post_id]).comments.create`
+    resources :comments, only: %w[new create index]
+  end
+end
+
+resources :users do
+  scope module: :users do
+    # We want to display comments for each user via `User.find(params[:user_id]).comments`
+    resources :comments, only: :index
+  end
+end
+```
+
+Then in our controllers we're writing finders like this all over the place:
+
+```ruby
+module Posts
+  class CommentsController
+    before_action :assign_post
+
+    def new
+      @post = Post.new
+    end
+
+    def create
+      @post = Post.new(params)
+      if @post.save
+        redirect_to @post
+      else
+        render "new" # Show the form error
+      end
+    end
+
+    def index
+      @comments = @post.comments
+    end
+
+    protected
+
+    def assign_post
+      @post = Post.find params[:post_id]
+    end
+  end
+end
+```
+
+Why are we writing so much code to do something that we should be able to infer from the name of the controller and what's up with the verbosity of our routes file? Gah!
+
+## Oxidizer tries to solve even more shortcomings with Controllers
+
+In addition giving developers "convention over configuration" for Rails shallow resources, Oxidizer aims to give us interfaces between views and controllers.
+
+### Interfaces between controllers and views for common controller concerns
+
+1. Bulk resource selection and manipulation
+2. Sorting collections of resources
+3. Searching collections of resources
+4. Paginating collections of resources
+
+Often, these solutions are re-invented in several gems with slightly different interfaces, which makes it difficult for a common view layer to plug into.
+
+
+### More composable views
+
+Additionally, inheritance of views leaves a lot to be desired. Oxidizer will provide a sane set of `view_paths` per controller such that your nested `Posts::CommentsController#show` view would first look in `./views/posts/comments/show.html.erb` and then `./views/posts/show.html.erb` if the more deeply nested view is not found.
+
+The project will also look into more radical ways to compose UI's with the [Phlex](https://phlex.fun) project to make the Rails controller & view stack even more composable.
+
+## Getting Started
 
 Add to your Rails application Gemfile by executing:
 
@@ -200,12 +306,6 @@ class Resources < ApplicationController
     include Oxidizer::NestedWeakResource
   end
 end
-```
-
-Then from your application, you can generate resources as follows:
-
-```sh
-./bin/rails g oxidizer:resources
 ```
 
 ## Concepts
@@ -262,7 +362,7 @@ During the development of this gem, some of these other libraries were mentioned
 
 [@julian_rubisch](https://twitter.com/julian_rubisch/status/1587186996879007747?s=61&t=gOFfW6GtJqGs5ETPy_nsog)
 
-Yeah, I've been there too! I used the Inherited Resources gem once for an admin panel and found it difficult to do things when I inherited.
+Yeah, I've been there too! I used the Inherited Resources gem once for an admin panel and found it difficult to do things around inheritance.
 
 Take for example this:
 
@@ -273,7 +373,7 @@ class AccountsController < InheritedResources::Base
 end
 ```
 
-That's not really inheritence; rather, it's a class method DSL that configures instances methods. Why not just modify the instance methods themselves?
+That's not really inheritance; rather, it's a class method DSL that configures instances methods. Why not just modify the instance methods themselves?
 
 That's how Oxidizer does it:
 
@@ -293,7 +393,9 @@ class AccountsController < ApplicationResourcesController
 end
 ```
 
-It's inheritence how you'd expect it to work; not a DSL.
+It's inheritance how you'd expect it to work; not a DSL.
+
+Additionally, Inherited Resources made it difficult to "eject" from the abstraction. One of the key principals of the Oxidizer project is to make it easy to break out of abstractions that no longer work and solve the problem with Rails or Plain 'ol Ruby objects.
 
 ## License
 
