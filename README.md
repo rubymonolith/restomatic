@@ -1,18 +1,48 @@
 # Oxidizer
 
-Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer reduces a lot of the boilerplate and spaghetti code typically seen in Rails controllers by:
+Rails controllers require a lot of boilerplate for non-trivial Rails applications. Oxidizer reduces a lot of the boilerplate code typically seen in Rails controllers by:
 
-1. Moving authorization out of controller methods and callbacks and into policy objects via Pundit.
+1. Making common controller concerns, like authorization, batch selection, searching, sorting, pagination, creating X copies on creation, etc. into classes that can be composed back into the controller.
+
 2. Encourage the use of more, but smaller, controllers to handle various interactions with ActiveRecord objects and other Resources.
+
 3. Utilizes PORO and inheritance for making controller code less verbose, as opposed to a DSL approach, which can be difficult to extend and obfuscates how Rails controllers work.
+
 4. Encourages keeping business logic out of ActiveRecord objects **and** controllers by utilizing Resource objects.
 
 Putting that all together, a typical Oxidizer controller that handles CRUD actions for a blog comment feature would look like this:
 
+## Putting it all together
+
+A great Rails developer is always wary of taking on new abstractions, particularly when they're DSLs. One of the most important thing when evaluating more powerful abstractions is the ability to "eject" from them back into plain 'ol Rails if the abstraction stops working. That's exactly what Oxidizer does. Let's have a closer look.
+
+### Controllers
+
+Here's what a typical oxidizer resources controller looks like:
+
 ```ruby
 # Example Oxidizer controller for comments in a blog post.
-class CommentsController < Oxidizer::NestedResourcesController
-  protected
+module Posts
+  class CommentsController < Oxidizer::NestedResourcesController
+    protected
+      def assign_attributes
+        resource.user = current_user
+        resource.post = parent_resource
+      end
+
+      def permitted_params
+        [:post_id, :body]
+      end
+  end
+end
+```
+
+It looks like there's a lot of magic going on, but there's not. It's all accomplished via inheritance. Here's what the controller above looks like when its expanded out.
+
+```ruby
+# Here's what it would look like if you implemented most of the boiler plate above in a controller without using Oxidizer.
+module Posts
+  class CommentsController < ApplicationController
     def self.resource
       Comment
     end
@@ -21,18 +51,108 @@ class CommentsController < Oxidizer::NestedResourcesController
       Post
     end
 
-    def assign_attributes
-      @comment.user = current_user
-      @comment.blog = @post
+    def create
+      self.resource = resource_class.new(resource_params)
+      assign_attributes
+
+      respond_to do |format|
+        if resource.save
+          format.html { redirect_to create_redirect_url, notice: create_notice }
+          format.json { render :show, status: :created, location: resource }
+        else
+          format.html { render :new, status: :unprocessable_entity }
+          format.json { render json: resource.errors, status: :unprocessable_entity }
+        end
+      end
     end
 
-    def permitted_params
-      [:post_id, :body]
-    end
+    protected
+      def assign_attributes
+        resource.user = current_user
+        resource.post = parent_resource
+      end
+
+      def permitted_params
+        [:post_id, :body]
+      end
+
+      def create_redirect_url
+        url_for(action: :create)
+      end
+
+      def create_notice
+        "#{parent_resource.class.name} was create"
+      end
+
+      def resource_class
+        resource
+      end
+
+      def parent_resource
+        @parent_resource ||= find_parent_resource
+      end
+
+      def find_parent_resource
+        self.class.parent_resource.find_resource params[parent_resource_id_param]
+      end
+
+      def parent_resource_id_param
+        "#{parent_resource_name}_id".to_sym
+      end
+  end
 end
 ```
 
-Since there's no DSLs, its easy to extend Oxidizer controllers to implement any type of behavior you need.
+Since there's no DSLs, its easy to extend Oxidizer controllers to implement any type of behavior you need in your controllers if the default behavior doesn't suit your needs.
+
+### Routing
+
+Similar to Oxidizer controllers, Oxidizer route helpers make it a little easier to mount your RESTful controllers into your application without much additional magic beyond Rails routing.
+
+```ruby
+resources :items do
+  get :search, to: "items/searches#index"
+  nest :items do
+    resources :children, only: %i[index new create] do
+      collection do
+        get :templates
+      end
+    end
+    list :ancestors
+    edit :icon
+    create :labels
+    create :copies
+    create :batches
+    create :movement
+    create :loanable, controller: "loanable_items"
+  end
+end
+```
+
+Here's what the fully expanded routes would look like if you did them all manually by yourself.
+
+```ruby
+resources :items do
+  get :search, to: "items/searches#index"
+  scope module: :items do
+    resources :children, only: %i[index new create] do
+      collection do
+        get :templates
+      end
+    end
+    resources :ancestors, only: %i[index]
+    resources :labels, only: %i[create]
+    resources :copies, only: %i[create new]
+    resources :batches, only: %i[new create]
+    resource :icon, only: %i[edit update]
+    resource :movement, only: %i[new create]
+    resource :loanable, only: %i[new create], controller: "loanable_items"
+    template_resources :containers, :items, :perishables
+  end
+end
+```
+
+Again, Oxidizer makes it easy to eject from its abstractions into vanilla Rails if you need to change a few things within your application.
 
 ## Installation
 
@@ -81,119 +201,6 @@ Then from your application, you can generate resources as follows:
 ```sh
 ./bin/rails g oxidizer:resources
 ```
-
-## Routing
-
-Oxidizer can automatically mount your resource tree so you don't have to maintain redudant route files. Here's how that looks:
-
-### Some modest routing extensions
-
-Given a Rails routing hierarchy like this:
-
-```ruby
-resources :items do
-  get :search, to: "items/searches#index"
-  scope module: :items do
-    resources :children, only: %i[index new create] do
-      collection do
-        get :templates
-      end
-    end
-    resources :ancestors, only: %i[index]
-    resources :labels, only: %i[create]
-    resources :copies, only: %i[create new]
-    resources :batches, only: %i[new create]
-    resource :icon, only: %i[edit update]
-    resource :movement, only: %i[new create]
-    resource :loanable, only: %i[new create], controller: "loanable_items"
-    template_resources :containers, :items, :perishables
-  end
-end
-```
-
-It might be clearer with something like this:
-
-```ruby
-resources :items do
-  get :search, to: "items/searches#index"
-  dir :items do
-    resources :children, only: %i[index new create] do
-      collection do
-        get :templates
-      end
-    end
-    list :ancestors
-    edit :icon
-    create :labels
-    create :copies
-    create :batches
-    create :movement
-    create :loanable, controller: "loanable_items"
-  end
-end
-```
-
-The names more clearly show the relationship of the controller to its resource, what what it's expected to do.
-
-### Routing trees
-
-```ruby
-oxidizer.resource :accounts
-```
-
-If the structure of accounts is:
-
-```
-accounts
-  |- items_controller.rb
-  |- labels_controller.rb
-accounts_controller.rb
-items_controller.rb
-```
-
-All routes will get automatically generated. There's no need to maintain a Routes file that mimics the structure of your controllers.
-
-### Steal Bullet Train routes
-
-I'm probably going to steal [Bullet Train Routes](https://github.com/bullet-train-co/bullet_train-routes), which will look something like this:
-
-```ruby
-model "Orders::Fulfillment" do
-  model "Shipping::Package"
-end
-```
-
-But instead I'd pass controllers into it, like this:
-
-```ruby
-# Heh, can't think of a name ATM and `controller` is taken.
-kontroller Orders::FulfillmentController do
-  kontroller Shipping::PackageController
-end
-```
-
-It's tempting to take this a step further and delegate routing to a folder full of controllers, that might look something like this:
-
-```ruby
-controller_hierarchy Account
-# Iterates through Account::Users, Account::Items, Account::Blah... and connects all of the resource routes.
-```
-
-Regardless, any shortcuts taken should interoperate with Rails controllers in case the developer needs "eject" from the abstraction and configure "vanilla" Rails routing. This is the key thing that Bullet Train Rails gets right.
-
-#### CRUD routes
-
-Another option that would be fun for routes, which I'm not leaning towards at the moment, are `crudi` routes.
-
-```ruby
-crud Orders::FulfillmentController do # Create, read, update, & destroy
-  cru Shipping::PackageController # Create, read, & update: no destroy
-end
-```
-
-This is probably "too clever"; a novice won't know what CRUD means. This would be a fun way to deal with the `resources :blah, only: [:create, :new, :update, :edit]` business.
-
-
 
 ## Concepts
 
