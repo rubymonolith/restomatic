@@ -86,6 +86,57 @@ Then from your application, you can generate resources as follows:
 
 Oxidizer can automatically mount your resource tree so you don't have to maintain redudant route files. Here's how that looks:
 
+### Some modest routing extensions
+
+Given a Rails routing hierarchy like this:
+
+```ruby
+resources :items do
+  get :search, to: "items/searches#index"
+  scope module: :items do
+    resources :children, only: %i[index new create] do
+      collection do
+        get :templates
+      end
+    end
+    resources :ancestors, only: %i[index]
+    resources :labels, only: %i[create]
+    resources :copies, only: %i[create new]
+    resources :batches, only: %i[new create]
+    resource :icon, only: %i[edit update]
+    resource :movement, only: %i[new create]
+    resource :loanable, only: %i[new create], controller: "loanable_items"
+    template_resources :containers, :items, :perishables
+  end
+end
+```
+
+It might be clearer with something like this:
+
+```ruby
+resources :items do
+  get :search, to: "items/searches#index"
+  dir :items do
+    resources :children, only: %i[index new create] do
+      collection do
+        get :templates
+      end
+    end
+    list :ancestors
+    edit :icon
+    create :labels
+    create :copies
+    create :batches
+    create :movement
+    create :loanable, controller: "loanable_items"
+  end
+end
+```
+
+The names more clearly show the relationship of the controller to its resource, what what it's expected to do.
+
+### Routing trees
+
 ```ruby
 oxidizer.resource :accounts
 ```
@@ -100,7 +151,49 @@ accounts_controller.rb
 items_controller.rb
 ```
 
-All routes will get automatically generatated. There's no need to maintain a Routes file that mimics the structure of your controllers.
+All routes will get automatically generated. There's no need to maintain a Routes file that mimics the structure of your controllers.
+
+### Steal Bullet Train routes
+
+I'm probably going to steal [Bullet Train Routes](https://github.com/bullet-train-co/bullet_train-routes), which will look something like this:
+
+```ruby
+model "Orders::Fulfillment" do
+  model "Shipping::Package"
+end
+```
+
+But instead I'd pass controllers into it, like this:
+
+```ruby
+# Heh, can't think of a name ATM and `controller` is taken.
+kontroller Orders::FulfillmentController do
+  kontroller Shipping::PackageController
+end
+```
+
+It's tempting to take this a step further and delegate routing to a folder full of controllers, that might look something like this:
+
+```ruby
+controller_hierarchy Account
+# Iterates through Account::Users, Account::Items, Account::Blah... and connects all of the resource routes.
+```
+
+Regardless, any shortcuts taken should interoperate with Rails controllers in case the developer needs "eject" from the abstraction and configure "vanilla" Rails routing. This is the key thing that Bullet Train Rails gets right.
+
+#### CRUD routes
+
+Another option that would be fun for routes, which I'm not leaning towards at the moment, are `crudi` routes.
+
+```ruby
+crud Orders::FulfillmentController do # Create, read, update, & destroy
+  cru Shipping::PackageController # Create, read, & update: no destroy
+end
+```
+
+This is probably "too clever"; a novice won't know what CRUD means. This would be a fun way to deal with the `resources :blah, only: [:create, :new, :update, :edit]` business.
+
+
 
 ## Concepts
 
@@ -186,6 +279,8 @@ class AccountsController < ApplicationResourcesController
   end
 end
 ```
+
+It's inheritence how you'd expect it to work; not a DSL.
 
 ## License
 
