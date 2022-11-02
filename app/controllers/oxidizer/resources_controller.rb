@@ -19,7 +19,7 @@ module Oxidizer
     add_flash_types :created_resource, :updated_resource
 
     def self.resource
-      raise NotImplementedError, "ResourcesController.resource must be an ActiveModel or ActiveRecord class"
+      controller_name.classify.constantize
     end
 
     def index

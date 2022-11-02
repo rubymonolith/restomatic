@@ -8,7 +8,7 @@ module Oxidizer
 
     protected
       def self.parent_resource
-        raise NotImplementedError, "NestedResourcesController.parent_resource must be an ActiveModel or ActiveRecord class"
+        module_parent_name.classify.constantize
       end
 
       def resources
