@@ -114,20 +114,18 @@ Similar to Oxidizer controllers, Oxidizer route helpers make it a little easier 
 ```ruby
 resources :items do
   get :search, to: "items/searches#index"
-  nest do
-    create :children do
-      collection do
-        get :templates
-      end
+  nest :children do
+    collection do
+      get :templates
     end
-    list :ancestors
-    edit :icon
-    create :labels
-    create :copies
-    create :batches
-    create :movement
-    create :loanable, controller: "loanable_items"
   end
+  list :ancestors
+  edit :icon
+  create :labels
+  create :copies
+  create :batches
+  create :movement
+  create :loanable, controller: "loanable_items"
 end
 ```
 
@@ -258,7 +256,6 @@ In addition giving developers "convention over configuration" for Rails shallow 
 4. Paginating collections of resources
 
 Often, these solutions are re-invented in several gems with slightly different interfaces, which makes it difficult for a common view layer to plug into.
-
 
 ### More composable views
 
