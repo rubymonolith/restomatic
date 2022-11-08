@@ -4,7 +4,9 @@ module ActionDispatch::Routing
   # approach. For now, deal with this helper.
   class Mapper
     def nest(name = nil, *args, except: nil, **kwargs, &block)
-      assert_resource_scope method_name: :nest
+      unless resource_scope?
+        raise ArgumentError, "can't use nest outside resource(s) scope"
+      end
 
       if name.nil?
         scope module: parent_resource.name, &block
@@ -22,37 +24,26 @@ module ActionDispatch::Routing
     end
 
     def create(name, *args, **kwargs, &block)
-      assert_resource_scope method_name: :create
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def edit(name, *args, only: %i[edit update], **kwargs, &block)
-      assert_resource_scope method_name: :edit
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def show(name, *args, only: :show, **kwargs, &block)
-      assert_resource_scope method_name: :show
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def destroy(name, *args, only: :destroy, **kwargs, &block)
-      assert_resource_scope method_name: :destroy
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def list(name, *args, only: :index, **kwargs, &block)
-      assert_resource_scope method_name: :list
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     private
-
-    def assert_resource_scope(method_name:)
-      unless resource_scope?
-        raise ArgumentError, "can't use #{method_name} outside resource(s) scope"
-      end
-    end
 
     def is_singular_resource_name?(name)
       name_string = name.to_s
