@@ -119,13 +119,15 @@ resources :items do
       get :templates
     end
   end
-  list :ancestors
-  edit :icon
-  create :labels
-  create :copies
-  create :batches
-  create :movement
-  create :loanable, controller: "loanable_items"
+  nest do
+    list :ancestors
+    edit :icon
+    create :labels
+    create :copies
+    create :batches
+    create :movement
+    create :loanable, controller: "loanable_items"
+  end
 end
 ```
 

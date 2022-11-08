@@ -21,29 +21,29 @@ module ActionDispatch::Routing
       end
     end
 
-    def create(name, *args, **kwargs, &)
+    def create(name, *args, **kwargs, &block)
       assert_resource_scope method_name: :create
-      nest { inflect_resource_plurality name, *args, **kwargs, & }
+      inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def edit(name, *args, only: %i[edit update], **kwargs, &block)
       assert_resource_scope method_name: :edit
-      nest { inflect_resource_plurality name, *args, **kwargs, &block }
+      inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def show(name, *args, only: :show, **kwargs, &block)
       assert_resource_scope method_name: :show
-      nest { inflect_resource_plurality name, *args, **kwargs, &block }
+      inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def destroy(name, *args, only: :destroy, **kwargs, &block)
       assert_resource_scope method_name: :destroy
-      nest { inflect_resource_plurality name, *args, **kwargs, &block }
+      inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def list(name, *args, only: :index, **kwargs, &block)
       assert_resource_scope method_name: :list
-      nest { inflect_resource_plurality name, *args, **kwargs, &block }
+      inflect_resource_plurality name, *args, **kwargs, &block
     end
 
     def nest_namespace(name, *args, **kwargs, &block)
