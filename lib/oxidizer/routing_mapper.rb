@@ -46,15 +46,6 @@ module ActionDispatch::Routing
       inflect_resource_plurality name, *args, **kwargs, &block
     end
 
-    def nest_namespace(name, *args, **kwargs, &block)
-      assert_resource_scope method_name: :nest_namespace
-      collection do
-        namespace parent_resource.name do
-          namespace name, *args, **kwargs, &block
-        end
-      end
-    end
-
     private
 
     def assert_resource_scope(method_name:)
