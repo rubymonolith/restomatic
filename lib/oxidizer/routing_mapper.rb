@@ -24,23 +24,23 @@ module ActionDispatch::Routing
     end
 
     def create(name, *args, **kwargs, &block)
-      inflect_resource_plurality name, *args, **kwargs, &block
+      inflect_resource_plurality name, *args, only: %i[new create], **kwargs, &block
     end
 
-    def edit(name, *args, only: %i[edit update], **kwargs, &block)
-      inflect_resource_plurality name, *args, **kwargs, &block
+    def edit(name, *args, **kwargs, &block)
+      inflect_resource_plurality name, *args, only: %i[edit update], **kwargs, &block
     end
 
-    def show(name, *args, only: :show, **kwargs, &block)
-      inflect_resource_plurality name, *args, **kwargs, &block
+    def show(name, *args, **kwargs, &block)
+      inflect_resource_plurality name, *args, only: :show, **kwargs, &block
     end
 
-    def destroy(name, *args, only: :destroy, **kwargs, &block)
-      inflect_resource_plurality name, *args, **kwargs, &block
+    def destroy(name, *args, **kwargs, &block)
+      inflect_resource_plurality name, *args, only: :destroy, **kwargs, &block
     end
 
-    def list(name, *args, only: :index, **kwargs, &block)
-      inflect_resource_plurality name, *args, **kwargs, &block
+    def list(name, *args, **kwargs, &block)
+      inflect_resource_plurality name, *args, only: :index, **kwargs, &block
     end
 
     private
