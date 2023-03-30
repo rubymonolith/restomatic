@@ -1,7 +1,5 @@
 module Oxidizer
   module Form
-    extend ActiveSupport::Concern
-
     def initialize(model:)
       @model = model
     end

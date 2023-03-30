@@ -27,8 +27,8 @@ module Oxidizer
 
     # Initializers a Phlex view based on the action name, then assigns `view_assigns`
     # to the view.
-    def phlex(...)
-      assign_phlex_accessors self.class.phlex_action_class(action: action_name).new(...)
+    def phlex(action: action_name)
+      assign_phlex_accessors self.class.phlex_action_class(action: action).new
     end
 
     # Try rendering with the regular Rails rendering methods; if those don't work
