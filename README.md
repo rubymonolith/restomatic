@@ -28,7 +28,7 @@ app/controllers/application_resources_controller.rb
 
 ## Overview
 
-Oxidizer was designed to be composable, which means you can use different parts of it seperately, or all together.
+Oxidizer was designed to be composable, which means you can use different parts of it separately, or all together.
 
 ### Rails shallow routes enhancements
 
