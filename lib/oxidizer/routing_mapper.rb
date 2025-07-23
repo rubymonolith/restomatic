@@ -12,7 +12,7 @@ module ActionDispatch::Routing
         scope module: parent_resource.name, &block
       elsif is_singular_resource_name? name
         scope module: parent_resource.name do
-          except ||= %i[index edit update destroy]
+          except ||= %i[edit update destroy]
           resource name, *args, except: except, **kwargs, &block
         end
       else
