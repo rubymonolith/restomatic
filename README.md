@@ -1,42 +1,48 @@
-# Oxidizer
+# Restomatic
 
-Oxidizer is a collection of helpers, libraries, and patterns that accelerates the development of your Rails applications by reducing the amount of boilerplate and code needed for controllers and views. Less codes means you'll ship your application faster and be able to iterate more rapidly on user feedback.
+Better route mappers for Rails applications. Restomatic provides cleaner, more intuitive helpers for defining RESTful routes with proper scoping and namespacing.
 
-It accomplishes this by providing a pattern for Rails shallow routes and a component-first base approach to building applications in Rails. Let's have a closer look.
+## Installation
 
-## Getting Started
+Add to your Rails application Gemfile:
 
-Add to your Rails application Gemfile by executing:
-
-```bash
-bundle add "oxidizer"
+```ruby
+gem "restomatic"
 ```
 
 Then run:
 
 ```bash
-# TODO: Not implemented yet
-rails generate oxidizer:install
+bundle install
 ```
 
-This will add the gems and includes that you need to your project to get going.
+That's it! The routing helpers are automatically available in your `config/routes.rb` file.
 
-```txt
-# TODO: Not implemented yet
-app/controllers/application_resources_controller.rb
+## The Problem
+
+Rails provides shallow routes and nested resources, but the syntax becomes verbose and repetitive, especially when you want to properly namespace controllers.
+
+### Before Restomatic
+
+```ruby
+resources :blogs do
+  scope module: :blogs do
+    resources :posts, only: %i[index new create] do
+      collection do
+        get :search
+      end
+    end
+  end
+end
+
+resources :posts do
+  scope module: :posts do
+    resources :comments, only: %i[new create]
+  end
+end
 ```
 
-## Overview
-
-Oxidizer was designed to be composable, which means you can use different parts of it seperately, or all together.
-
-### Rails shallow routes enhancements
-
-There's a lot of [great content](http://weblog.jamisbuck.org/2007/2/5/nesting-resources) written about the importance of [shallow routes](https://guides.rubyonrails.org/routing.html#limits-to-nesting) for building RESTful Rails applications, but the tools Rails gives us out of the box [leaves a lot to be desired](#the-problem-with-rails-shallow-resources).
-
-Oxidizer route helpers make it a little easier to mount your RESTful controllers into your application without much additional magic beyond Rails routing.
-
-#### 🚀 Routes with Oxidizer
+### With Restomatic
 
 ```ruby
 resources :blogs do
@@ -52,264 +58,159 @@ resources :posts do
 end
 ```
 
-#### 🐌 Routes before Oxidizer existed
+Much cleaner! The `nest` helper automatically:
+- Scopes to the parent resource's module (e.g., `Blogs::PostsController`)
+- Sets sensible defaults for which actions are included
+- Reduces boilerplate while maintaining Rails conventions
+
+## Route Helpers
+
+### `nest`
+
+Nest resources under a parent with automatic module scoping and sensible action defaults.
 
 ```ruby
 resources :blogs do
-  scope module: :blogs do
-    resources :posts, only: %i[index new create] do
-      collection do
-        get :search
-      end
-    end
-  end
+  nest :posts         # Creates index, new, create actions under Blogs::PostsController
+  nest :post          # Singular: creates new, create actions (no edit/update/destroy)
 end
+```
 
+**Options:**
+- `except:` - Exclude specific actions (overrides defaults)
+- Singular resources default to excluding: `[:edit, :update, :destroy]`
+- Plural resources default to excluding: `[:show, :edit, :update, :destroy]`
+
+**Module-only nesting:**
+
+```ruby
 resources :posts do
-  resources :comments, only: %i[create new]
-end
-```
-
-### Embed Phlex views right in your controller
-
-Build your applications entirely out of Phlex view components, which works great with TailwindCSS. It's not for everybody, but a component-first approach to building applications can make it easier to change things down the road. Best of all? You can still use Rails templates as you always have.
-
-```ruby
-# Example Oxidizer controller for comments in a blog post.
-class BlogsController
-  include Oxidizer::Assignable
-  include Oxidizer::Phlexable
-
-  assign :blogs, to: :current_user
-
-  # This implicitly renders for the `index` action
-  class Index < Application
-    def template
-      section do
-        h1 { "#{@current_user}'s Blogs" }
-        div(class: "flex flex-row gap-20") do
-          @blogs.each do |blog|
-            div { link_to blog.name, blog }
-          end
-        end
-      end
-    end
-  end
-
-  # This implicitly renders for the `show` action
-  class Show < Application
-    def template
-      section do
-        h1 { @blog.name }
-        div(class: "flex flex-row gap-20") do
-          @blogs.posts.each do |post|
-            div { link_to post.title, post }
-          end
-        end
-      end
-    end
+  nest do
+    # Routes defined here will be scoped to Posts module
+    # without creating a nested resource
+    get :analytics
   end
 end
 ```
 
-Embedding Phlex views into a controller is a great way to rapidly prototype Rails applications, especially if you already have a set of Phlex components and layouts.
+### `create`
 
-The best part is that it can exist side-by-side with what you already expect from Rails, so you can incrementally upgrade your controllers to be Phlexable or mix Rails views with Phlex views like this:
+Define routes for creating a resource (new + create actions only).
 
 ```ruby
-class LegacyBlogsController
-  include Oxidizer::Phlexable
+resources :posts do
+  create :comments    # Only new and create actions
+end
 
-  before_filter :load_blog, only: :show
+create :session       # Works with both singular and plural forms
+```
 
-  # This implicitly renders for the `index` action
-  class Index < Application
-    def template
-      section do
-        h1 { "#{@current_user}'s Blogs" }
-        div(class: "flex flex-row gap-20") do
-          @blogs.each do |blog|
-            div { link_to blog.name, blog }
-          end
-        end
-      end
-    end
-  end
+### `edit`
 
-  def show
-    render :show, layout: "blog_layout"
-  end
+Define routes for editing a resource (edit + update actions only).
 
-  private
-
-  def load_blog
-    @blog = load_blog
-  end
+```ruby
+resources :posts do
+  edit :metadata      # Only edit and update actions
 end
 ```
 
-### Sensible helpers to load and scope data
+### `show`
 
-One of the most tedious parts of building Rails applications is the frequent `before_action :find_resource` code that's in every controller. It gets even more tedious with shallow routes. Oxidizer makes it a one-liner that's compatible with authorization libraries that use ActiveRecord scopes.
+Define routes for showing a resource (show action only).
 
 ```ruby
-# Example Oxidizer controller that shows the posts for a users blog.
-module Blogs
-  class PostsController < ApplicationController
-    include Oxidizer::Assignable
-
-    assign :posts, through: :blogs, to: :current_user
-
-    class Index
-      h1 { "#{@blog.title} Posts" }
-      div(class: "flex flex-col gap-20") do
-        @posts.each do |post|
-          a(href: url_for(post)) { post.title }
-        end
-      end
-    end
-  end
+resources :posts do
+  show :preview       # Only show action
 end
 ```
 
-### Form components built from the ground-up on Phlex
+### `destroy`
 
-Rails Forms are some of the most boiler-plate heavy parts of building an application. Odidizer streamlines that with a set of form helpers that look and feel like Rails, but are built from the ground up to be composable. That means you could get to a spot with your controllers so that most of your application looks like this:
+Define routes for destroying a resource (destroy action only).
 
 ```ruby
-module Posts
-  class CommentsController < ApplicationController
-    include Oxidizer::Assignable
-
-    assign :comments, through: :posts, to: :current_user
-
-    class Form < ApplicationForm
-      def template(&)
-        h1 { "#{modify} comment" }
-        field :title
-        field :text
-        submit { "Save comment" }
-      end
-
-      def modify
-        @model.persisted ? "Create" : "Edit"
-      end
-    end
-
-    protected
-      def permitted_params
-        [:title, :text]
-      end
-  end
+resources :posts do
+  destroy :attachment # Only destroy action
 end
 ```
 
-## Prior art
+### `list`
 
-What was Rails like before Oxidizer? The sections below give an overview of the problems Rails presented to give you a better idea of why Oxidizer exists.
-
-### The problem with Rails shallow resources
-
-Rails does a decent job warning us about the perils of shallow routes and even gets us started with the `resources :comments, shallow: true` helper, but as your application grows, it doesn't provide much in the way of code organization and reducing the amount of boiler plate code needed to make this work.
-
-Let's start by looking a typical Rails routes file.
+Define routes for listing resources (index action only).
 
 ```ruby
-resources :posts
-  # Creates a comment on `Post.find(params[:post_id]).comments.create`
-  resources :comments, shallow: true
-end
-
 resources :users do
-  # We want to display comments for each user via `User.find(params[:user_id]).comments`
-  resources :comments, only: :index
+  list :posts         # Only index action
 end
 ```
 
-If you use shallow routes, both `resources :comments` entries point to the `CommentsController`. This is where things start getting crazy—what if you want to display different views for each scope but it's pointing to the same controller?
-
-You could implement a conditional within the `CommentsController` that checks for the presence of different ids.
+## Real-World Example
 
 ```ruby
-# Don't do this!
-def show
-  if params.key? :post_id
-    render "comment_post"
-  elsif params.key? :user_id
-    render "user_post"
-  else
-    render "show"
+Rails.application.routes.draw do
+  root "home#index"
+
+  # Public blog routes
+  resources :blogs, only: [:index, :show] do
+    list :posts
   end
-end
-```
 
-Don't do that! Having conditions like this is code smell that each scope needs its own controller, which means we break apart `CommentsController` into `Posts::CommentsController` in `./app/controllers/posts/comments_controller.rb` and `Users::CommentsControllers` in `./app/controllers/users/comments_controller.rb`. It eliminates the crazy conditional above, but then it forces us to generate lots of resource controllers with routing entries that don't make a ton of sense.
-
-```ruby
-resources :posts
-  scope module: :posts do
-    # Creates a comment on `Post.find(params[:post_id]).comments.create`
-    resources :comments, only: %w[new create index]
-  end
-end
-
-resources :users do
-  scope module: :users do
-    # We want to display comments for each user via `User.find(params[:user_id]).comments`
-    resources :comments, only: :index
-  end
-end
-```
-
-Then in our controllers we're writing finders like this all over the place:
-
-```ruby
-module Posts
-  class CommentsController
-    before_action :assign_post
-
-    def new
-      @post = Post.new
-    end
-
-    def create
-      @post = Post.new(params)
-      if @post.save
-        redirect_to @post
-      else
-        render "new" # Show the form error
+  # Admin area with nested resources
+  namespace :admin do
+    resources :blogs do
+      nest :posts do
+        create :comments
+        collection do
+          get :scheduled
+          post :bulk_publish
+        end
       end
     end
 
-    def index
-      @comments = @post.comments
+    resources :posts do
+      edit :seo
+      show :preview
+      destroy :featured_image
     end
+  end
 
-    protected
-
-    def assign_post
-      @post = Post.find params[:post_id]
+  # User account management
+  resource :account do
+    nest do
+      edit :profile
+      edit :password
+      show :billing
     end
   end
 end
 ```
 
-Why are we writing so much code to do something that we should be able to infer from the name of the controller and what's up with the verbosity of our routes file? Gah!
+## How It Works
 
-## Future projects
+Restomatic extends `ActionDispatch::Routing::Mapper` to add these helper methods. The helpers automatically:
 
-In addition to composable views and sane ways of loading data into a controller, Oxidizer will seek to ship a common pattern for handling:
+1. Detect singular vs. plural resource names
+2. Apply appropriate module scoping
+3. Set sensible action defaults based on the helper used
+4. Work seamlessly with existing Rails routing features
 
-1. Bulk resource selection and manipulation
-2. Sorting collections of resources
-3. Searching collections of resources
-4. Paginating collections of resources
+## Philosophy
 
-Often, these solutions are re-invented in several gems with slightly different interfaces, which makes it difficult for a common view layer to plug into.
+Rails routing is powerful but can become verbose when building properly organized applications with shallow routes and namespaced controllers. Restomatic embraces Rails conventions while reducing boilerplate, making your routes file more readable and maintainable.
+
+## Requirements
+
+- Rails 7.0+
+- Ruby 3.0+
 
 ## Contributing
 
-Open issues with reproducible steps.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b my-new-feature`)
+3. Commit your changes (`git commit -am 'Add some feature'`)
+4. Push to the branch (`git push origin my-new-feature`)
+5. Create a new Pull Request
 
 ## License
 
