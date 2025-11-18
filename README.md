@@ -1,28 +1,39 @@
-# Restomatic
+# RESTomatic
 
-Better route mappers for Rails applications. Restomatic provides cleaner, more intuitive helpers for defining RESTful routes with proper scoping and namespacing.
+RESTomatic helps Rails developers organize nested resources with automatic namespacing. Each nested resource gets its own controller module, making your app cleaner and easier to maintain.
+
+Unlike Rails shallow routes that send everything to one controller, RESTomatic enforces proper separation: `Blogs::PostsController`, `Users::PostsController`, etc. keeping your controllers organized and your codebase more maintainable.
 
 ## Installation
 
 Add to your Rails application Gemfile:
 
 ```ruby
-gem "restomatic"
+bundle add "restomatic"
 ```
-
-Then run:
-
-```bash
-bundle install
-```
-
 That's it! The routing helpers are automatically available in your `config/routes.rb` file.
+
+Then start using more RESTful routes in `config/routes.rb`:
+
+```ruby
+resources :blogs do
+  nest :posts do                    # Blogs::PostsController
+    collection do
+      get :search                   # Blogs::PostsController#search
+    end
+  end
+end
+
+resources :posts do
+  create :comments                  # Posts::CommentsController#new, #create
+end
+```
 
 ## The Problem
 
 Rails provides shallow routes and nested resources, but the syntax becomes verbose and repetitive, especially when you want to properly namespace controllers.
 
-### Before Restomatic
+### Before RESTomatic
 
 ```ruby
 resources :blogs do
@@ -42,19 +53,19 @@ resources :posts do
 end
 ```
 
-### With Restomatic
+### With RESTomatic
 
 ```ruby
 resources :blogs do
-  nest :posts do
+  nest :posts do                    # Blogs::PostsController
     collection do
-      get :search
+      get :search                   # Blogs::PostsController#search
     end
   end
 end
 
 resources :posts do
-  create :comments
+  create :comments                  # Posts::CommentsController#new, #create
 end
 ```
 
@@ -153,34 +164,34 @@ Rails.application.routes.draw do
 
   # Public blog routes
   resources :blogs, only: [:index, :show] do
-    list :posts
+    list :posts                              # Blogs::PostsController#index
   end
 
   # Admin area with nested resources
   namespace :admin do
     resources :blogs do
-      nest :posts do
-        create :comments
+      nest :posts do                         # Admin::Blogs::PostsController
+        create :comments                     # Admin::Blogs::Posts::CommentsController#new, #create
         collection do
-          get :scheduled
-          post :bulk_publish
+          get :scheduled                     # Admin::Blogs::PostsController#scheduled
+          post :bulk_publish                 # Admin::Blogs::PostsController#bulk_publish
         end
       end
     end
 
     resources :posts do
-      edit :seo
-      show :preview
-      destroy :featured_image
+      edit :seo                              # Admin::Posts::SeosController#edit, #update
+      show :preview                          # Admin::Posts::PreviewsController#show
+      destroy :featured_image                # Admin::Posts::FeaturedImagesController#destroy
     end
   end
 
   # User account management
   resource :account do
     nest do
-      edit :profile
-      edit :password
-      show :billing
+      edit :profile                          # Accounts::ProfilesController#edit, #update
+      edit :password                         # Accounts::PasswordsController#edit, #update
+      show :billing                          # Accounts::BillingsController#show
     end
   end
 end
@@ -188,7 +199,7 @@ end
 
 ## How It Works
 
-Restomatic extends `ActionDispatch::Routing::Mapper` to add these helper methods. The helpers automatically:
+RESTomatic extends `ActionDispatch::Routing::Mapper` to add these helper methods. The helpers automatically:
 
 1. Detect singular vs. plural resource names
 2. Apply appropriate module scoping
@@ -197,7 +208,7 @@ Restomatic extends `ActionDispatch::Routing::Mapper` to add these helper methods
 
 ## Philosophy
 
-Rails routing is powerful but can become verbose when building properly organized applications with shallow routes and namespaced controllers. Restomatic embraces Rails conventions while reducing boilerplate, making your routes file more readable and maintainable.
+Rails routing is powerful but can become verbose when building properly organized applications with shallow routes and namespaced controllers. RESTomatic embraces Rails conventions while reducing boilerplate, making your routes file more readable and maintainable.
 
 ## Requirements
 
