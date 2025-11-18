@@ -1,5 +1,8 @@
 # RESTomatic
 
+[![Test](https://github.com/rubymonolith/restomatic/actions/workflows/test.yml/badge.svg)](https://github.com/rubymonolith/restomatic/actions/workflows/test.yml)
+[![Gem Version](https://badge.fury.io/rb/restomatic.svg)](https://badge.fury.io/rb/restomatic)
+
 RESTomatic helps Rails developers organize nested resources with automatic namespacing. Each nested resource gets its own controller module, making your app cleaner and easier to maintain.
 
 Unlike Rails shallow routes that send everything to one controller, RESTomatic enforces proper separation: `Blogs::PostsController`, `Users::PostsController`, etc. keeping your controllers organized and your codebase more maintainable.
