@@ -5,11 +5,11 @@ Gem::Specification.new do |spec|
   spec.version     = Restomatic::VERSION
   spec.authors     = ["Brad Gessler"]
   spec.email       = ["bradgessler@gmail.com"]
-  spec.homepage    = "https://github.com/rocketshipio/restomatic"
+  spec.homepage    = "https://github.com/rubymonolith/restomatic"
   spec.summary     = "Better route mappers for Rails applications"
   spec.description = "Provides cleaner, more intuitive helpers for defining RESTful routes with proper scoping and namespacing in Rails"
   spec.license     = "MIT"
-  
+
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
@@ -20,6 +20,6 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 7.0"
-  
+
   spec.required_ruby_version = ">= 3.0"
 end

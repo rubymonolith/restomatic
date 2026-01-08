@@ -1,13 +1,13 @@
 PATH
   remote: .
   specs:
-    restomatic (1.0.0)
+    restomatic (1.0.1)
       rails (>= 7.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
-    action_text-trix (2.1.15)
+    action_text-trix (2.1.16)
       railties
     actioncable (8.1.1)
       actionpack (= 8.1.1)
@@ -115,7 +115,7 @@ GEM
     marcel (1.1.0)
     mini_mime (1.1.5)
     minitest (5.26.2)
-    net-imap (0.5.12)
+    net-imap (0.6.2)
       date
       net-protocol
     net-pop (0.1.2)
@@ -203,7 +203,7 @@ GEM
     securerandom (0.4.1)
     stringio (3.1.8)
     thor (1.4.0)
-    timeout (0.4.4)
+    timeout (0.6.0)
     tsort (0.2.0)
     tzinfo (2.0.6)
       concurrent-ruby (~> 1.0)
